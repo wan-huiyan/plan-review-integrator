@@ -1,0 +1,22 @@
+{
+  "name": "plan-review-integrator",
+  "version": "1.0.0",
+  "description": "Integrate structured review panel findings into implementation plan documents with full traceability.",
+  "author": "wan-huiyan",
+  "license": "MIT",
+  "skills": [
+    {
+      "name": "plan-review-integrator",
+      "path": "skills/plan-review-integrator/SKILL.md",
+      "description": "Consumes structured review panel output and integrates findings into an implementation plan document — turning review feedback into concrete plan updates with full traceability."
+    }
+  ],
+  "keywords": [
+    "claude-code",
+    "claude-code-skill",
+    "code-review",
+    "implementation-planning",
+    "review-integration",
+    "multi-agent"
+  ]
+}

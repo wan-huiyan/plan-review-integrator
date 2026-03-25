@@ -1,0 +1,14 @@
+{
+  "name": "plan-review-integrator",
+  "version": "1.0.0",
+  "author": "wan-huiyan",
+  "description": "Integrate structured review panel findings into implementation plan documents with full traceability.",
+  "keywords": [
+    "claude-code",
+    "claude-code-skill",
+    "code-review",
+    "implementation-planning",
+    "review-integration",
+    "multi-agent"
+  ]
+}

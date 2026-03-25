@@ -1,0 +1,130 @@
+# Plan-Review Integrator
+
+Integrate structured review panel findings into implementation plan documents with full traceability.
+
+A Claude Code skill that closes the gap between review reports and implementation plans. Instead of manually cross-referencing findings, classifying severity, and editing plan documents, this skill systematically processes every finding, validates it against domain context, and applies concrete updates with an audit trail.
+
+## Quick Start
+
+```
+You: Here's the review panel output for our API migration plan:
+     review_panel_api_migration.md
+     And here's the plan: docs/plan_api_migration.md
+     Integrate the review findings into the plan.
+
+Claude: [Reads both documents + project context]
+        [Extracts 14 findings across 3 reviewers]
+        [Cross-references each against the plan]
+        [Classifies: 3 must-fix, 5 bundle, 4 defer, 2 informational]
+        [Applies edits to plan document]
+        [Produces traceability summary]
+
+        ## Review Integration Summary
+        - Total findings: 14
+        - Must-fix: 3 (applied to plan)
+        - Bundle into implementation: 5 (added to checklists)
+        - Deferred: 4 (documented with rationale)
+        - Informational: 2 (no action needed)
+
+        | ID     | Severity | Summary                        | Category      | Action Taken                          |
+        |--------|----------|--------------------------------|---------------|---------------------------------------|
+        | R1-F01 | CRITICAL | Missing auth check in step 3   | Must-fix      | Added guard to Phase 2 code snippet   |
+        | R1-F02 | HIGH     | Stale timeout config           | Bundle        | Added to implementation checklist      |
+        | R1-F03 | MEDIUM   | Refactor legacy adapter        | Defer         | Pre-existing debt, tracked in TODO    |
+        | ...    | ...      | ...                            | ...           | ...                                   |
+
+        Would you like to adjust any classifications before finalizing?
+```
+
+## Installation
+
+### Claude Code
+
+```bash
+# Clone the repo
+git clone https://github.com/wan-huiyan/plan-review-integrator.git ~/.claude/skills/plan-review-integrator
+
+# Or add as a project skill
+git clone https://github.com/wan-huiyan/plan-review-integrator.git .claude/skills/plan-review-integrator
+```
+
+### Cursor
+
+Add to your `.cursor/rules/plan-review-integrator.mdc`:
+
+```
+---
+description: Integrate structured review panel findings into implementation plan documents
+globs:
+alwaysApply: false
+---
+
+@plan-review-integrator/SKILL.md
+```
+
+## What You Get
+
+- **Classified findings** — Every review finding sorted into must-fix, bundle, defer, or informational with rationale
+- **Updated plan document** — Concrete edits applied directly: fixed code snippets, added checklists, inline caveats
+- **Peripheral updates** — ADRs, runbooks, and memory files updated where findings affect them
+- **Traceability summary** — Full audit trail mapping each finding to its disposition and the action taken
+
+## Comparison
+
+| Aspect | Manual Review Integration | With This Skill |
+|--------|--------------------------|-----------------|
+| Finding extraction | Read report, copy items to spreadsheet | Automated parsing with severity + source |
+| Cross-referencing | Ctrl-F through plan, hope nothing is missed | Systematic matching against every plan section |
+| Domain validation | Reviewer fixes applied as-is | Each fix validated against project context |
+| Pre-existing debt | Mixed in with plan defects | Explicitly classified and deferred |
+| Completeness audit items | Often ignored as "minor" | Elevated — systematic gaps get extra scrutiny |
+| Traceability | Informal "I think we got everything" | Table linking every finding to its action |
+| Time to integrate | 30-60 min per review report | 5-10 min including user confirmation |
+
+## How It Works
+
+| Phase | What Happens |
+|-------|-------------|
+| 1. Gather Inputs | Collect review reports + plan document + domain context |
+| 2. Extract Findings | Parse all findings with severity, source, citations, consensus status |
+| 3. Cross-Reference | Match each finding against plan content (already addressed, gap, correction, new concern, pre-existing) |
+| 4. Classify | Assign action category: must-fix, bundle into implementation, defer, informational |
+| 5. Apply Edits | Modify plan document with fixes, additions, caveats, checklists |
+| 6. Update Peripherals | ADRs, runbooks, memory files as needed |
+| 7. Produce Summary | Traceability table with statistics and key decisions |
+
+## Key Design Decisions
+
+### Domain context validation
+
+Review panels often identify correct symptoms but prescribe wrong fixes when they lack domain context. This skill explicitly gathers project memory, configuration files, and related documentation before applying any recommendations. A CRITICAL finding might turn out to be a verification step (not a design flaw), or a correct observation about pre-existing tech debt that the current plan does not worsen.
+
+### Completeness audit emphasis
+
+Completeness audit findings from review panels deserve extra scrutiny because they represent systematic gaps that all individual reviewers overlooked. The skill elevates these above regular findings during classification.
+
+### Four-category classification
+
+Rather than a binary "apply / skip" decision, findings land in one of four categories. This prevents the common failure modes of (a) treating all CRITICAL items as plan defects, (b) losing implementation details that aren't plan-level fixes, and (c) mixing pre-existing tech debt into must-fix blockers.
+
+## Related Skills
+
+- **[agent-review-panel](https://github.com/wan-huiyan/agent-review-panel)** — Upstream. Produces the structured review findings this skill consumes.
+- **[brainstorming](https://github.com/wan-huiyan/brainstorming)** — Plan creation. Can produce the initial plan that gets reviewed and then integrated.
+
+## Limitations
+
+- Requires structured review input with severity ratings. Informal code review comments without severity classification will need manual annotation first.
+- Domain context validation is only as good as the project's documentation. Poorly documented projects may still get incorrect fixes applied.
+- Does not re-run the review panel — it only processes existing findings. If the plan changes substantially, a new review panel run is recommended.
+- The skill asks for user confirmation before finalizing, but in autonomous mode it may apply all edits without pause.
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2026-03-25 | Initial release. 7-phase workflow with domain context validation. |
+
+## License
+
+MIT
