@@ -64,10 +64,13 @@ alwaysApply: false
 
 ## What You Get
 
-- **Classified findings** — Every review finding sorted into must-fix, bundle, defer, or informational with rationale
-- **Updated plan document** — Concrete edits applied directly: fixed code snippets, added checklists, inline caveats
+- **Actionability-filtered findings** — Low-signal noise dropped before classification; epistemic labels from upstream reviews weight effective severity
+- **Classified findings** — Every finding sorted into must-fix, bundle, defer, or informational using epistemic-weighted severity (a `[VERIFIED]` HIGH outranks a `[SINGLE-SOURCE]` CRITICAL)
+- **Updated plan document** — Concrete edits with dual rollback (rephrase, then revert) when edits break coherence
+- **Post-integration verification** — Automated coherence, completeness, voice, and cross-reference checks
 - **Peripheral updates** — ADRs, runbooks, and memory files updated where findings affect them
 - **Traceability summary** — Full audit trail mapping each finding to its disposition and the action taken
+- **Persistent integration log** — `integration_log.jsonl` enables cross-session learning from prior integration decisions
 
 ## Comparison
 
@@ -88,10 +91,13 @@ alwaysApply: false
 | 1. Gather Inputs | Collect review reports + plan document + domain context |
 | 2. Extract Findings | Parse all findings with severity, source, citations, consensus status |
 | 3. Cross-Reference | Match each finding against plan content (already addressed, gap, correction, new concern, pre-existing) |
-| 4. Classify | Assign action category: must-fix, bundle into implementation, defer, informational |
-| 5. Apply Edits | Modify plan document with fixes, additions, caveats, checklists |
+| 3.5. Actionability Filter | Score findings on actionability + groundedness; drop low-signal noise |
+| 4. Classify | Assign action category using epistemic-weighted severity |
+| 5. Apply Edits | Modify plan document with rollback on coherence breaks |
+| 5.5. Verify | Re-read modified plan; check coherence, completeness, voice, cross-references |
 | 6. Update Peripherals | ADRs, runbooks, memory files as needed |
 | 7. Produce Summary | Traceability table with statistics and key decisions |
+| 7.5. Log | Append decisions to persistent `integration_log.jsonl` for cross-session learning |
 
 ## Key Design Decisions
 
@@ -119,10 +125,28 @@ Rather than a binary "apply / skip" decision, findings land in one of four categ
 - Does not re-run the review panel — it only processes existing findings. If the plan changes substantially, a new review panel run is recommended.
 - The skill asks for user confirmation before finalizing, but in autonomous mode it may apply all edits without pause.
 
+## Research Credits
+
+v1.2 design decisions are informed by academic research and open-source projects:
+
+| Feature | Source | Reference |
+|---------|--------|-----------|
+| Actionability filter | Atlassian RovoDev Code Reviewer | [ICSE 2026 SEIP](https://arxiv.org/abs/2601.01129) |
+| Epistemic-weighted severity | "Can LLM Agents Really Debate?" | [arXiv:2511.07784](https://arxiv.org/abs/2511.07784) |
+| Dual rollback strategy | AutoDW document workflows | [arXiv:2512.04445](https://arxiv.org/abs/2512.04445) |
+| Post-integration verification | Self-Refine (Madaan et al.) | [NeurIPS 2023](https://arxiv.org/abs/2303.17651) |
+| Cross-model review pattern | ARIS (Auto-Research-In-Sleep) | [github.com/wanshuiyin/Auto-claude-code-research-in-sleep](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) |
+| Persistent experiment log | pi-autoresearch | [github.com/davebcn87/pi-autoresearch](https://github.com/davebcn87/pi-autoresearch) |
+| Fine-grained comment classification | Review comment taxonomy | [arXiv:2508.09832](https://arxiv.org/abs/2508.09832) |
+| Multi-agent debate protocols | Voting vs Consensus (Kaesberg et al.) | [ACL 2025 Findings](https://arxiv.org/abs/2502.19130) |
+| Anti-sycophancy mechanisms | CONSENSAGENT | [ACL 2025 Findings](https://aclanthology.org/2025.findings-acl.1141/) |
+| Feedback-to-section mapping | Friction (Zhang et al.) | [CHI 2025](https://dl.acm.org/doi/10.1145/3706598.3714316) |
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2.0 | 2026-03-27 | Actionability filter, epistemic-weighted severity, dual rollback, post-integration verification, persistent integration log, upstream schema contract. 10 research sources credited. |
 | 1.0.0 | 2026-03-25 | Initial release. 7-phase workflow with domain context validation. |
 
 ## License
