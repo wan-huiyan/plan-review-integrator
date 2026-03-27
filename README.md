@@ -116,7 +116,7 @@ Rather than a binary "apply / skip" decision, findings land in one of four categ
 ## Related Skills
 
 - **[agent-review-panel](https://github.com/wan-huiyan/agent-review-panel)** — Upstream. Produces the structured review findings this skill consumes.
-- **[brainstorming](https://github.com/wan-huiyan/brainstorming)** — Plan creation. Can produce the initial plan that gets reviewed and then integrated.
+- **[brainstorming](https://github.com/obra/superpowers)** — Plan creation. Can produce the initial plan that gets reviewed and then integrated.
 
 ## Limitations
 
