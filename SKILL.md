@@ -66,6 +66,10 @@ Collect three things:
 
 Domain context is essential for validating reviewer recommendations. Do NOT skip it.
 
+**Empty review guard:** If the review contains no actionable findings (clean pass),
+produce no classifications and output: "No action items identified. Plan unchanged."
+Skip Phases 3-8 and go directly to Phase 10 with a summary confirming the clean review.
+
 ---
 
 ## VoltAgent Specialist Verification (v1.3)
@@ -201,6 +205,8 @@ Categorize each finding's relationship to the plan:
 - Is the concern already mitigated by a mechanism the reviewer didn't see?
 
 Document cases where the finding is valid but the prescribed fix is wrong.
+Override the reviewer's prescribed fix when domain validation shows it is incorrect,
+and supply the correct fix. Record the override in the key decisions section of the summary.
 
 **VoltAgent verification (v1.3):** When a P0/P1 finding's cross-reference
 judgment is ambiguous (especially "Already addressed" vs "Gap"), and a relevant
@@ -274,7 +280,7 @@ P0 or P1 effective priority + Correction or Gap + affects correctness/data integ
 Valid items that are implementation details, not plan defects, e.g., pipeline quality gates or additional test cases. Added to checklists.
 
 ### Defer
-LOW severity, pre-existing debt not worsened by plan, or different workstream. For instance, refactoring code not touched by this plan. Documented with rationale.
+LOW severity, pre-existing debt not worsened by plan, or different workstream. For instance, refactoring code not touched by this plan. Documented with rationale. Add a TODO or backlog item for tracking.
 
 ### Informational
 Raised, debated, and resolved during review. No plan changes needed.
@@ -375,7 +381,7 @@ Example output:
 | R1-F02 | HIGH | Stale default in config | Bundle | Added to checklist item 3 |
 | R1-F03 | MEDIUM | Refactor identity resolution | Defer | Pre-existing, tracked as future work |
 
-Include statistics (total/must-fix/bundle/defer/info counts) and key decisions (e.g., why a reviewer fix was overridden). Present summary to user and ask if they want to adjust classifications before finalizing.
+Include statistics in this format: `Total findings: {N} | Must-fix: {n} | Bundle: {n} | Defer: {n} | Info: {n}`. Include key decisions (e.g., why a reviewer fix was overridden). Present summary to user and ask if they want to adjust classifications before finalizing.
 
 ---
 
