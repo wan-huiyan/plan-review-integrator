@@ -71,6 +71,7 @@ alwaysApply: false
 - **Peripheral updates** — ADRs, runbooks, and memory files updated where findings affect them
 - **Traceability summary** — Full audit trail mapping each finding to its disposition and the action taken
 - **Persistent integration log** — `integration_log.jsonl` enables cross-session learning from prior integration decisions
+- **VoltAgent specialist verification** (optional) — When VoltAgent agents are installed, P0/P1 must-fix edits get domain-expert second opinions before application, catching wrong fixes that general context might miss
 
 ## Comparison
 
@@ -88,16 +89,21 @@ alwaysApply: false
 
 | Phase | What Happens |
 |-------|-------------|
+| **Gather** | |
 | 1. Gather Inputs | Collect review reports + plan document + domain context |
-| 2. Extract Findings | Parse all findings with severity, source, citations, consensus status |
-| 3. Cross-Reference | Match each finding against plan content (already addressed, gap, correction, new concern, pre-existing) |
-| 3.5. Actionability Filter | Score findings on actionability + groundedness; drop low-signal noise |
-| 4. Classify | Assign action category using epistemic-weighted severity |
-| 5. Apply Edits | Modify plan document with rollback on coherence breaks |
-| 5.5. Verify | Re-read modified plan; check coherence, completeness, voice, cross-references |
-| 6. Update Peripherals | ADRs, runbooks, memory files as needed |
-| 7. Produce Summary | Traceability table with statistics and key decisions |
-| 7.5. Log | Append decisions to persistent `integration_log.jsonl` for cross-session learning |
+| 2. VoltAgent Detection | Scan for available VoltAgent specialists; suggest install if content signals match |
+| **Analyze** | |
+| 3. Extract Findings | Parse all findings with severity, source, citations, consensus status |
+| 4. Cross-Reference | Match each finding against plan content (already addressed, gap, correction, new concern, pre-existing) |
+| 5. Actionability Filter | Score findings on actionability + groundedness; drop low-signal noise |
+| 6. Classify | Assign action category using epistemic-weighted severity |
+| **Apply** | |
+| 7. Apply Edits | Modify plan document with rollback on coherence breaks |
+| 8. Verify | Re-read modified plan; check coherence, completeness, voice, cross-references |
+| **Finalize** | |
+| 9. Update Peripherals | ADRs, runbooks, memory files as needed |
+| 10. Produce Summary | Traceability table with statistics and key decisions |
+| 11. Persistent Log | Append decisions to `integration_log.jsonl` for cross-session learning |
 
 ## Key Design Decisions
 
@@ -141,11 +147,13 @@ v1.2 design decisions are informed by academic research and open-source projects
 | Multi-agent debate protocols | Voting vs Consensus (Kaesberg et al.) | [ACL 2025 Findings](https://arxiv.org/abs/2502.19130) |
 | Anti-sycophancy mechanisms | CONSENSAGENT | [ACL 2025 Findings](https://aclanthology.org/2025.findings-acl.1141/) |
 | Feedback-to-section mapping | Friction (Zhang et al.) | [CHI 2025](https://dl.acm.org/doi/10.1145/3706598.3714316) |
+| VoltAgent specialist routing | awesome-claude-code-subagents | [github.com/VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) |
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.0 | 2026-03-30 | VoltAgent specialist verification for P0/P1 findings. Optional domain-expert second opinions during cross-referencing and edit application. Max 3 specialist spawns per run. Installation prompts (once per session, non-blocking). |
 | 1.2.0 | 2026-03-27 | Actionability filter, epistemic-weighted severity, dual rollback, post-integration verification, persistent integration log, upstream schema contract. 10 research sources credited. |
 | 1.0.0 | 2026-03-25 | Initial release. 7-phase workflow with domain context validation. |
 
