@@ -1,6 +1,6 @@
 ---
 name: plan-review-integrator
-version: 1.2.0
+version: 1.3.0
 author: wan-huiyan
 description: >
   Integrate structured review panel findings into an implementation plan document.
@@ -26,7 +26,7 @@ output_contract: >
   are applied.
 ---
 
-# Plan-Review Integrator v1.2
+# Plan-Review Integrator v1.3
 
 Consumes structured review panel output and integrates findings into an
 implementation plan document -- turning review feedback into concrete plan updates
@@ -40,18 +40,19 @@ with full traceability.
 
 ## Quick Reference
 
-| Phase | Action | Output |
-|-------|--------|--------|
-| 1. Gather | Collect review reports + plan + domain context | Input set |
-| 2. Extract | Parse findings with severity, source, citations | Structured finding list |
-| 3. Cross-ref | Match each finding against plan content | Category per finding |
-| 3.5. Filter | Score actionability, drop low-signal findings | Filtered finding list |
-| 4. Classify | Assign action category (epistemic-weighted) | must-fix / bundle / defer / info |
-| 5. Apply | Edit plan document with rollback on coherence break | Updated plan |
-| 5.5. Verify | Re-read modified plan, check coherence | Verified plan or rollback |
-| 6. Peripherals | Update ADRs, runbooks, memory | Supporting docs |
-| 7. Summary | Traceability table | Audit trail |
-| 7.5. Log | Append decisions to persistent integration log | integration_log.jsonl |
+| Stage | Phase | Action | Output |
+|-------|-------|--------|--------|
+| **Gather** | 1. Gather Inputs | Collect review reports + plan + domain context | Input set |
+| | 2. VoltAgent Detection | Detect specialists, suggest install if beneficial | Available specialist map |
+| **Analyze** | 3. Extract Findings | Parse findings with severity, source, citations | Structured finding list |
+| | 4. Cross-Reference | Match each finding against plan content | Category per finding |
+| | 5. Actionability Filter | Score actionability, drop low-signal findings | Filtered finding list |
+| | 6. Classify | Assign action category (epistemic-weighted) | must-fix / bundle / defer / info |
+| **Apply** | 7. Apply Edits | Edit plan document with rollback on coherence break | Updated plan |
+| | 8. Verify | Re-read modified plan, check coherence | Verified plan or rollback |
+| **Finalize** | 9. Update Peripherals | Update ADRs, runbooks, memory | Supporting docs |
+| | 10. Produce Summary | Traceability table | Audit trail |
+| | 11. Persistent Log | Append decisions to integration log | integration_log.jsonl |
 
 ---
 
@@ -65,9 +66,106 @@ Collect three things:
 
 Domain context is essential for validating reviewer recommendations. Do NOT skip it.
 
+**Empty review guard:** If the review contains no actionable findings (clean pass),
+produce no classifications and output: "No action items identified. Plan unchanged."
+Skip Phases 3-8 and go directly to Phase 10 with a summary confirming the clean review.
+
 ---
 
-## Phase 2: Extract Findings
+## VoltAgent Specialist Verification (v1.3)
+
+VoltAgent specialist agents (127+ across 10 families) have built-in domain
+expertise via their system prompts. Unlike agent-review-panel (which replaces
+reviewer personas with VoltAgent agents), this skill uses VoltAgent as an
+**optional second-opinion verifier** for high-severity edits. The skill remains
+single-agent; specialists are consulted, not orchestrated.
+Full catalog: github.com/VoltAgent/awesome-claude-code-subagents
+
+**Step 1: Detection.** During Phase 1 (Gather Inputs), scan the system-reminder
+agent list for any `voltagent-*` prefixed agents. Note which families are
+installed (e.g., `voltagent-data-ai`, `voltagent-infra`, `voltagent-lang`).
+If none found, skip all VoltAgent steps silently -- everything works without them.
+
+**Step 2: Content-signal routing.** Match plan content signals to specialists:
+
+| Content Signal | VoltAgent Specialist | Verification Use |
+|---|---|---|
+| SQL / database queries | `voltagent-data-ai:database-optimizer` | Verify query correctness in must-fix edits |
+| Data pipelines / ETL | `voltagent-data-ai:data-engineer` | Verify pipeline logic changes |
+| ML / model training | `voltagent-data-ai:ml-engineer` | Verify model config / hyperparameter fixes |
+| Python code | `voltagent-lang:python-pro` | Verify code snippet corrections |
+| TypeScript code | `voltagent-lang:typescript-pro` | Verify TS code corrections |
+| Go code | `voltagent-lang:golang-pro` | Verify Go code corrections |
+| Rust code | `voltagent-lang:rust-engineer` | Verify Rust code corrections |
+| Java / Spring | `voltagent-lang:java-architect` | Verify Java code corrections |
+| Terraform / IaC | `voltagent-infra:terraform-engineer` | Verify infra changes in plan edits |
+| Kubernetes / k8s | `voltagent-infra:kubernetes-specialist` | Verify k8s manifest changes |
+| Docker / containers | `voltagent-infra:docker-expert` | Verify container config changes |
+| CI/CD / pipelines | `voltagent-infra:deployment-engineer` | Verify deployment procedure edits |
+| Security / auth | `voltagent-qa-sec:security-auditor` | Verify security fix correctness |
+| Performance / scaling | `voltagent-qa-sec:performance-engineer` | Verify performance-related changes |
+| API design / REST | `voltagent-core-dev:api-designer` | Verify API contract changes |
+| GraphQL | `voltagent-core-dev:graphql-architect` | Verify schema changes |
+| React / frontend | `voltagent-lang:react-specialist` | Verify frontend code corrections |
+| Compliance / GDPR | `voltagent-qa-sec:compliance-auditor` | Verify regulatory compliance of edits |
+
+**Step 3: Suggest installation when beneficial.** If content signals match
+VoltAgent specialists but the relevant agent families are not available,
+suggest installation to the user:
+
+> "This integration would benefit from VoltAgent specialist agents for
+> domain-specific edit verification. You can install the relevant families with:
+>
+> **Quick install (CLI):**
+> `claude plugin install voltagent-qa-sec`  -- security, code review, testing
+> `claude plugin install voltagent-data-ai` -- data science, ML, databases
+> `claude plugin install voltagent-infra`   -- DevOps, cloud, Terraform
+> `claude plugin install voltagent-lang`    -- language specialists (TS, Python, Go, Rust)
+>
+> **Or browse via marketplace:**
+> `/plugin marketplace add VoltAgent/awesome-claude-code-subagents`
+> then `/plugin install <name>@voltagent-subagents`
+>
+> Continue without them? They're optional -- all verification works without
+> VoltAgent specialists."
+
+Only suggest installation **once per session**. List only the families relevant
+to the detected content signals, not all 10. If the user declines or the agents
+are not available, proceed silently with the standard single-agent workflow.
+
+**Step 4: When to spawn specialists.** VoltAgent spawns are gated by priority,
+phase, and a hard cap:
+
+1. **Priority gate:** ONLY for P0 or P1 effective priority findings (from
+   Phase 6 epistemic-weighted classification). P2 and informational findings
+   never trigger specialist verification.
+2. **Phase gate:** ONLY during Phase 4 (cross-reference validation) and
+   Phase 7 (edit verification). Optionally Phase 8 (post-integration
+   coherence check) if spawns remain.
+3. **Spawn cap:** Maximum **3** specialist spawns per integration run. If more
+   than 3 P0/P1 findings qualify, prioritize: P0 before P1, Corrections before
+   Gaps, security/data-integrity domains before others.
+4. **Specialist prompt:** Each specialist receives:
+   - The specific finding (ID, severity, detail, prescribed fix)
+   - The plan section being modified (2 paragraphs of surrounding context)
+   - Domain context gathered in Phase 1
+   - Focused question: "Is the prescribed fix correct for this domain? If not,
+     what should change?"
+5. **Response handling:** Specialist responses are **advisory**. If a specialist
+   flags the prescribed fix as incorrect:
+   - Document the specialist's concern in the traceability table
+   - Apply the specialist's suggested alternative if it passes coherence check
+   - Or flag for human review if disagreement cannot be resolved
+6. **Fallback:** If the specialist spawn fails or times out, proceed without it.
+   Log `"voltagent_verification": "unavailable"` in `integration_log.jsonl`.
+
+Note: findings downgraded by the actionability filter (Phase 5, where
+groundedness < 0.3 caps severity at MEDIUM) will not reach P0/P1 threshold
+for specialist verification. This is correct behavior.
+
+---
+
+## Phase 3: Extract Findings
 
 For each finding, capture:
 
@@ -88,7 +186,7 @@ For each finding, capture:
 
 ---
 
-## Phase 3: Cross-Reference
+## Phase 4: Cross-Reference
 
 Categorize each finding's relationship to the plan:
 
@@ -107,10 +205,20 @@ Categorize each finding's relationship to the plan:
 - Is the concern already mitigated by a mechanism the reviewer didn't see?
 
 Document cases where the finding is valid but the prescribed fix is wrong.
+Override the reviewer's prescribed fix when domain validation shows it is incorrect,
+and supply the correct fix. Record the override in the key decisions section of the summary.
+
+**VoltAgent verification (v1.3):** When a P0/P1 finding's cross-reference
+judgment is ambiguous (especially "Already addressed" vs "Gap"), and a relevant
+VoltAgent specialist is available, spawn the specialist to validate the judgment.
+The specialist sees the finding, the plan section claimed to address it, and
+asks: "Does this plan section genuinely address this concern, or is there a gap?"
+This catches false "Already addressed" classifications that domain context alone
+might miss. Counts toward the 3-spawn-per-run cap.
 
 ---
 
-## Phase 3.5: Actionability Filter
+## Phase 5: Actionability Filter
 
 > Inspired by Atlassian's RovoDev comment ranker (ICSE 2026, arXiv:2601.01129),
 > which found that filtering LLM-generated review comments with a quality predictor
@@ -139,7 +247,7 @@ Record the filter decision (pass/flag/drop) and scores for each finding in the t
 
 ---
 
-## Phase 4: Classify
+## Phase 6: Classify
 
 Assign each finding to one action category. Classification uses **epistemic-weighted
 severity** -- the effective priority of a finding depends on both its raw severity and
@@ -172,7 +280,7 @@ P0 or P1 effective priority + Correction or Gap + affects correctness/data integ
 Valid items that are implementation details, not plan defects, e.g., pipeline quality gates or additional test cases. Added to checklists.
 
 ### Defer
-LOW severity, pre-existing debt not worsened by plan, or different workstream. For instance, refactoring code not touched by this plan. Documented with rationale.
+LOW severity, pre-existing debt not worsened by plan, or different workstream. For instance, refactoring code not touched by this plan. Documented with rationale. Add a TODO or backlog item for tracking.
 
 ### Informational
 Raised, debated, and resolved during review. No plan changes needed.
@@ -184,7 +292,7 @@ Raised, debated, and resolved during review. No plan changes needed.
 
 ---
 
-## Phase 5: Apply Edits
+## Phase 7: Apply Edits
 
 | Category | Edit type |
 |----------|-----------|
@@ -198,6 +306,14 @@ Raised, debated, and resolved during review. No plan changes needed.
 - Preserve plan voice and structure
 - Do not rewrite correct sections
 - Link edits to finding IDs for traceability
+
+**VoltAgent verification (v1.3):** For must-fix edits where a domain specialist
+is available, spawn the specialist to verify the edit BEFORE applying it. The
+specialist receives the original finding, the proposed edit, and the surrounding
+plan context, and confirms the edit is technically correct for the domain. This
+catches wrong fixes that general domain context might miss (e.g., a SQL fix that
+is syntactically valid but semantically wrong for the specific database engine).
+Counts toward the 3-spawn-per-run cap.
 
 **Rollback on coherence break:**
 
@@ -219,14 +335,14 @@ a corrupted plan with a forced fix.
 
 ---
 
-## Phase 5.5: Post-Integration Verification
+## Phase 8: Post-Integration Verification
 
 > Inspired by Self-Refine (NeurIPS 2023, arXiv:2303.17651), which demonstrated 20%
 > average improvement from generate-critique-refine cycles, and ARIS's auto-review-loop
 > (github.com/wanshuiyin/Auto-claude-code-research-in-sleep) which chains cross-model
 > review for overnight autonomous quality improvement.
 
-After all Phase 5 edits are applied, perform a single verification pass:
+After all Phase 7 edits are applied, perform a single verification pass:
 
 1. **Coherence check** -- Re-read the full updated plan. Flag any section where edits
    from different findings contradict each other or create logical gaps.
@@ -234,15 +350,19 @@ After all Phase 5 edits are applied, perform a single verification pass:
    Every bundle finding appears in a checklist. Every defer finding has a rationale.
 3. **Voice check** -- Confirm edits match the plan's existing tone and style. Rewrite
    any edit that reads like injected review commentary rather than plan content.
-4. **Cross-reference check** -- If edits reference other plan sections (e.g., "see Phase 3"),
+4. **Cross-reference check** -- If edits reference other plan sections (e.g., "see Phase 4"),
    verify those references are still valid after modifications.
+5. **Domain coherence check (optional, v1.3)** -- If any VoltAgent specialist spawns remain
+   unused (under the 3-spawn cap), use one to re-read the full set of must-fix edits and
+   confirm they are mutually consistent from a domain perspective. This catches cases where
+   individually correct edits interact poorly.
 
 If verification surfaces issues, apply targeted fixes (not a full re-integration).
 Record verification findings in the traceability summary as "V-01", "V-02", etc.
 
 ---
 
-## Phase 6: Update Peripherals
+## Phase 9: Update Peripherals
 
 - **Memory files:** Document findings affecting future sessions, new conventions, updated action items
 - **ADRs:** Create/update for architectural decisions validated or modified by review
@@ -251,21 +371,21 @@ Record verification findings in the traceability summary as "V-01", "V-02", etc.
 
 ---
 
-## Phase 7: Produce Summary
+## Phase 10: Produce Summary
 
 Example output:
 
 | ID | Severity | Summary | Category | Action Taken |
 |----|----------|---------|----------|--------------|
-| R1-F01 | CRITICAL | Missing temporal guard | Must-fix | Added guard to Phase 2 |
+| R1-F01 | CRITICAL | Missing temporal guard | Must-fix | Added guard to step 3 query |
 | R1-F02 | HIGH | Stale default in config | Bundle | Added to checklist item 3 |
 | R1-F03 | MEDIUM | Refactor identity resolution | Defer | Pre-existing, tracked as future work |
 
-Include statistics (total/must-fix/bundle/defer/info counts) and key decisions (e.g., why a reviewer fix was overridden). Present summary to user and ask if they want to adjust classifications before finalizing.
+Include statistics in this format: `Total findings: {N} | Must-fix: {n} | Bundle: {n} | Defer: {n} | Info: {n}`. Include key decisions (e.g., why a reviewer fix was overridden). Present summary to user and ask if they want to adjust classifications before finalizing.
 
 ---
 
-## Phase 7.5: Persistent Integration Log
+## Phase 11: Persistent Integration Log
 
 > Inspired by pi-autoresearch's append-only `autoresearch.jsonl` experiment log
 > (github.com/davebcn87/pi-autoresearch), which enables fresh agent sessions to resume
@@ -287,7 +407,8 @@ Append one JSON line per finding to `integration_log.jsonl` in the project root:
   "disposition": "applied",
   "rollback": false,
   "verification_passed": true,
-  "notes": "Added temporal guard to Phase 2 query"
+  "voltagent_verification": "confirmed",
+  "notes": "Added temporal guard to step 3 query"
 }
 ```
 
@@ -296,7 +417,7 @@ are consistently deferred, which sources produce the most actionable findings, a
 severity levels correlate with actual plan changes. Future runs can use this history to
 calibrate actionability scoring.
 
-If `integration_log.jsonl` already exists, read it before Phase 3.5 to inform actionability
+If `integration_log.jsonl` already exists, read it before Phase 5 to inform actionability
 scoring: findings matching historically-deferred patterns get a -0.1 penalty; findings
 matching historically-applied patterns get a +0.1 bonus.
 
@@ -307,7 +428,7 @@ matching historically-applied patterns get a +0.1 bonus.
 > This section defines the expected input format from `agent-review-panel` to prevent
 > silent misparse when the upstream skill evolves. Version-pinned for compatibility.
 
-**Compatible with:** `agent-review-panel` v2.0+
+**Compatible with:** `agent-review-panel` v2.0+ (v2.9+ for VoltAgent-enriched findings)
 
 **Required fields per finding:**
 - Severity tier: `P0` / `P1` / `P2` (maps to CRITICAL / HIGH / MEDIUM-LOW)
@@ -360,12 +481,13 @@ This skill depends on `agent-review-panel` upstream. Works with review v1.0 outp
 7. **Severity-only triage** -- a `[SINGLE-SOURCE]` CRITICAL is weaker than a `[VERIFIED]` HIGH; always use epistemic-weighted severity
 8. **Forcing incoherent edits** -- if an edit breaks plan coherence, rollback; a flagged finding beats a corrupted plan
 9. **Ignoring integration history** -- check `integration_log.jsonl` for patterns before classifying; don't repeat deferred decisions without re-evaluation
+10. **Over-spawning specialists** -- VoltAgent is a verification tool here, not an orchestrator; cap at 3 spawns per run and only for P0/P1 findings
 
 ---
 
 ## Research Credits
 
-Design decisions in v1.2 are informed by the following research:
+Design decisions are informed by the following research:
 
 | Feature | Source | Reference |
 |---------|--------|-----------|
@@ -379,3 +501,4 @@ Design decisions in v1.2 are informed by the following research:
 | Multi-agent debate protocols | Voting vs Consensus (Kaesberg et al.) | ACL 2025 Findings, arXiv:2502.19130 |
 | Anti-sycophancy mechanisms | CONSENSAGENT | ACL 2025 Findings |
 | Feedback-to-section mapping | Friction (Zhang et al.) | CHI 2025 |
+| VoltAgent specialist routing | awesome-claude-code-subagents (VoltAgent) | github.com/VoltAgent/awesome-claude-code-subagents |
