@@ -1,4 +1,5 @@
 # Plan-Review Integrator
+[![GitHub release](https://img.shields.io/github/v/release/wan-huiyan/plan-review-integrator)](https://github.com/wan-huiyan/plan-review-integrator/releases) [![Claude Code](https://img.shields.io/badge/Claude_Code-skill-orange)](https://claude.com/claude-code) [![license](https://img.shields.io/github/license/wan-huiyan/plan-review-integrator)](LICENSE) [![last commit](https://img.shields.io/github/last-commit/wan-huiyan/plan-review-integrator)](https://github.com/wan-huiyan/plan-review-integrator/commits)
 
 Integrate structured review panel findings into implementation plan documents with full traceability.
 
