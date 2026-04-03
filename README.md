@@ -1,7 +1,7 @@
 # Plan-Review Integrator
 [![GitHub release](https://img.shields.io/github/v/release/wan-huiyan/plan-review-integrator)](https://github.com/wan-huiyan/plan-review-integrator/releases) [![Claude Code](https://img.shields.io/badge/Claude_Code-skill-orange)](https://claude.com/claude-code) [![license](https://img.shields.io/github/license/wan-huiyan/plan-review-integrator)](LICENSE) [![last commit](https://img.shields.io/github/last-commit/wan-huiyan/plan-review-integrator)](https://github.com/wan-huiyan/plan-review-integrator/commits)
 
-Integrate structured review panel findings into implementation plan documents with full traceability.
+After a review panel generates 14 findings with mixed severity, someone has to cross-reference each one against the plan, classify what's a real blocker versus pre-existing debt, and edit the document without breaking coherence. This skill does it in minutes with full traceability.
 
 A Claude Code skill that closes the gap between review reports and implementation plans. Instead of manually cross-referencing findings, classifying severity, and editing plan documents, this skill systematically processes every finding, validates it against domain context, and applies concrete updates with an audit trail.
 
