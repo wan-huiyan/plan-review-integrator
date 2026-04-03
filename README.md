@@ -147,12 +147,6 @@ v1.2 design decisions are informed by academic research and open-source projects
 | Epistemic-weighted severity | "Can LLM Agents Really Debate?" | [arXiv:2511.07784](https://arxiv.org/abs/2511.07784) |
 | Dual rollback strategy | AutoDW document workflows | [arXiv:2512.04445](https://arxiv.org/abs/2512.04445) |
 | Post-integration verification | Self-Refine (Madaan et al.) | [NeurIPS 2023](https://arxiv.org/abs/2303.17651) |
-| Cross-model review pattern | ARIS (Auto-Research-In-Sleep) | [wanshuiyin/Auto-claude-code-research-in-sleep](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) (separate GitHub account from wan-huiyan) |
-| Persistent experiment log | pi-autoresearch | [github.com/davebcn87/pi-autoresearch](https://github.com/davebcn87/pi-autoresearch) |
-| Fine-grained comment classification | Review comment taxonomy | [arXiv:2508.09832](https://arxiv.org/abs/2508.09832) |
-| Multi-agent debate protocols | Voting vs Consensus (Kaesberg et al.) | [ACL 2025 Findings](https://arxiv.org/abs/2502.19130) |
-| Anti-sycophancy mechanisms | CONSENSAGENT | [ACL 2025 Findings](https://aclanthology.org/2025.findings-acl.1141/) |
-| Feedback-to-section mapping | Friction (Zhang et al.) | [CHI 2025](https://dl.acm.org/doi/10.1145/3706598.3714316) |
 | VoltAgent specialist routing | awesome-claude-code-subagents | [github.com/VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) |
 
 ## Version History
