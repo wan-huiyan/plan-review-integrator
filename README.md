@@ -120,6 +120,11 @@ Completeness audit findings from review panels deserve extra scrutiny because th
 
 Rather than a binary "apply / skip" decision, findings land in one of four categories. This prevents the common failure modes of (a) treating all CRITICAL items as plan defects, (b) losing implementation details that aren't plan-level fixes, and (c) mixing pre-existing tech debt into must-fix blockers.
 
+## Requirements
+
+- Claude Code v1.0+
+- Structured review output from agent-review-panel (or any review with severity-rated findings)
+
 ## Related Skills
 
 - **[agent-review-panel](https://github.com/wan-huiyan/agent-review-panel)** — Upstream. Produces the structured review findings this skill consumes.
@@ -142,7 +147,7 @@ v1.2 design decisions are informed by academic research and open-source projects
 | Epistemic-weighted severity | "Can LLM Agents Really Debate?" | [arXiv:2511.07784](https://arxiv.org/abs/2511.07784) |
 | Dual rollback strategy | AutoDW document workflows | [arXiv:2512.04445](https://arxiv.org/abs/2512.04445) |
 | Post-integration verification | Self-Refine (Madaan et al.) | [NeurIPS 2023](https://arxiv.org/abs/2303.17651) |
-| Cross-model review pattern | ARIS (Auto-Research-In-Sleep) | [github.com/wanshuiyin/Auto-claude-code-research-in-sleep](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) |
+| Cross-model review pattern | ARIS (Auto-Research-In-Sleep) | [wanshuiyin/Auto-claude-code-research-in-sleep](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) (separate GitHub account from wan-huiyan) |
 | Persistent experiment log | pi-autoresearch | [github.com/davebcn87/pi-autoresearch](https://github.com/davebcn87/pi-autoresearch) |
 | Fine-grained comment classification | Review comment taxonomy | [arXiv:2508.09832](https://arxiv.org/abs/2508.09832) |
 | Multi-agent debate protocols | Voting vs Consensus (Kaesberg et al.) | [ACL 2025 Findings](https://arxiv.org/abs/2502.19130) |
