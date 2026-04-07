@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wan-huiyan-plan-review-integrator",
+  "description": "Single-plugin marketplace for plan-review-integrator — Claude Code skill: plan-review-integrator",
+  "owner": {
+    "name": "wan-huiyan"
+  },
+  "plugins": [
+    {
+      "name": "plan-review-integrator",
+      "source": "./plugins/plan-review-integrator",
+      "description": "Claude Code skill: plan-review-integrator",
+      "version": "1.4.0"
+    }
+  ]
+}
