@@ -39,28 +39,26 @@ Claude: [Reads both documents + project context]
 
 ## Installation
 
-### Claude Code
-
+**Claude Code (plugin install — recommended):**
 ```bash
-# Clone the repo
+# Add the marketplace, then install the plugin
+claude plugin marketplace add wan-huiyan/plan-review-integrator
+claude plugin install plan-review-integrator@wan-huiyan-plan-review-integrator
+```
+
+**Claude Code (git clone):**
+```bash
 git clone https://github.com/wan-huiyan/plan-review-integrator.git ~/.claude/skills/plan-review-integrator
-
-# Or add as a project skill
-git clone https://github.com/wan-huiyan/plan-review-integrator.git .claude/skills/plan-review-integrator
 ```
 
-### Cursor
+**Cursor** (2.4+):
+```bash
+# Per-project rule (most reliable)
+mkdir -p .cursor/rules
+# Copy plugins/plan-review-integrator/SKILL.md content into .cursor/rules/plan-review-integrator.mdc with alwaysApply: true
 
-Add to your `.cursor/rules/plan-review-integrator.mdc`:
-
-```
----
-description: Integrate structured review panel findings into implementation plan documents
-globs:
-alwaysApply: false
----
-
-@plan-review-integrator/SKILL.md
+# Or via npx skills CLI
+npx skills add wan-huiyan/plan-review-integrator --global
 ```
 
 ## What You Get
